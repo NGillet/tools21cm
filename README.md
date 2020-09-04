@@ -1,3 +1,7 @@
+# GO THERE for real [tools21cm](https://github.com/sambit-giri/tools21cm)
+# This is a crappy fork, don't use it, 
+
+
 # Tools21cm
 
 [![DOI](https://joss.theoj.org/papers/10.21105/joss.02363/status.svg)](https://doi.org/10.21105/joss.02363)
