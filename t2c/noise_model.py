@@ -14,7 +14,7 @@ from . import cosmology as cm
 from . import smoothing as sm
 import scipy
 
-def noise_map(ncells, z, depth_mhz, obs_time=1000, filename=None, boxsize=None, total_int_time=6., int_time=10., declination=-30., uv_map=np.array([]), N_ant=None, verbose=True, fft_wrap=False):
+def noise_map(ncells, z, depth_mhz, obs_time=1000, filename=None, boxsize=None, total_int_time=6., int_time=10., declination=-30., uv_map=np.array([]), rms_noi=None, N_ant=None, verbose=True, fft_wrap=False):
 	"""
 	@ Ghara et al. (2017), Giri et al. (2018b)
 
@@ -43,6 +43,8 @@ def noise_map(ncells, z, depth_mhz, obs_time=1000, filename=None, boxsize=None, 
 		Number of antennae
 	filename: str
 		The path to the file containing the telescope configuration.
+	rms_noi: float
+		RMS of the noise in micro Jy [uJy]
 
 			- As a default, it takes the SKA-Low configuration from Sept 2016
 			- It is not used if uv_map and N_ant is provided
@@ -59,7 +61,8 @@ def noise_map(ncells, z, depth_mhz, obs_time=1000, filename=None, boxsize=None, 
 	if not filename: N_ant = SKA1_LowConfig_Sept2016().shape[0]
 	if not uv_map.size: uv_map, N_ant  = get_uv_map(ncells, z, filename=filename, total_int_time=total_int_time, int_time=int_time, boxsize=boxsize, declination=declination)
 	if not N_ant: N_ant = np.loadtxt(filename, dtype=str).shape[0]
-	sigma, rms_noi = kanan_noise_image_ska(z, uv_map, depth_mhz, obs_time, int_time, N_ant_ska=N_ant, verbose=False)
+	if not rms_noi: sigma, rms_noi = kanan_noise_image_ska(z, uv_map, depth_mhz, obs_time, int_time, N_ant_ska=N_ant, verbose=False)
+	if verbose: print( '   noise_map RMS= {:.2f}'.format(rms_noi) )
 	noise_real = np.random.normal(loc=0.0, scale=rms_noi, size=(ncells, ncells))
 	noise_imag = np.random.normal(loc=0.0, scale=rms_noi, size=(ncells, ncells))
 	noise_arr  = noise_real + 1.j*noise_imag
@@ -219,7 +222,7 @@ def telescope_response_on_coeval(array, z, depth_mhz=None, obs_time=1000, filena
 		data3d[:,:,k] = data2d
 	return data3d
 
-def noise_cube_coeval(ncells, z, depth_mhz=None, obs_time=1000, filename=None, boxsize=None, total_int_time=6., int_time=10., declination=-30., uv_map=np.array([]), N_ant=None, verbose=True, fft_wrap=False):
+def noise_cube_coeval(ncells, z, depth_mhz=None, obs_time=1000, filename=None, boxsize=None, total_int_time=6., int_time=10., rms_noi=None, declination=-30., uv_map=np.array([]), N_ant=None, verbose=True, fft_wrap=False):
 	"""
 	@ Ghara et al. (2017), Giri et al. (2018b)
 
@@ -248,6 +251,8 @@ def noise_cube_coeval(ncells, z, depth_mhz=None, obs_time=1000, filename=None, b
 		Number of antennae
 	filename: str
 		The path to the file containing the telescope configuration.
+	rms_noi: float
+		RMS of the noise in micro Jy [uJy]
 
 			- As a default, it takes the SKA-Low configuration from Sept 2016
 			- It is not used if uv_map and N_ant is provided
@@ -270,7 +275,7 @@ def noise_cube_coeval(ncells, z, depth_mhz=None, obs_time=1000, filename=None, b
 	noise3d = np.zeros((ncells,ncells,ncells))
 	print("\nCreating the noise cube...")
 	for k in range(ncells):
-		noise2d = noise_map(ncells, z, depth_mhz, obs_time=obs_time, filename=filename, boxsize=boxsize, total_int_time=total_int_time, int_time=int_time, declination=declination, uv_map=uv_map, N_ant=N_ant, verbose=verbose, fft_wrap=fft_wrap)
+		noise2d = noise_map(ncells, z, depth_mhz, obs_time=obs_time, filename=filename, boxsize=boxsize, rms_noi=rms_noi, total_int_time=total_int_time, int_time=int_time, declination=declination, uv_map=uv_map, N_ant=N_ant, verbose=verbose, fft_wrap=fft_wrap)
 		noise3d[:,:,k] = noise2d
 		verbose = False
 		perc = np.round((k+1)*100/ncells, decimals=1) 
